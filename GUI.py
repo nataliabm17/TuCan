@@ -28,9 +28,9 @@ blue = (0, 172, 192)
 window_Width = 1000
 window_Height = 700
 
-v_axis = ["Time", "Packet Count", "Altitude (m)", "Pressure (Pa)", "Temperature (C)", "Voltage (V)", "GPS Time (ms)",
-            "GPS Latitude", "GPS Altitude", "GPS Stats", "Pitch", "Roll", "Blade Spin Rate (rpm)", "Software State",
-            "Launch", "Start", "Document", "Skip"]
+#y labels for the graphics
+v_axis = ["NA1", "NA2","Altitude (m)", "Voltage (V)", "Pressure (Pa)", "Temperature (C)", "Acceleration (m/s*s)", "GPS Time (s)",
+            "GPS Latitude", "GPS Longitude","GPS Altitude", "GPS Stats", "Pitch", "Roll", "Blade Spin Rate (rpm)"]
 # ----------------------------------------------
 # Clases y Funciones utilizadas
 # ----------------------------------------------
@@ -99,15 +99,15 @@ def display_general(screen, color1, v_variables):
     message_display(screen, 'Temperature:', 20, 798, 190)
     message_display(screen, 'Acceleration:', 20, 795, 230)
 
-    message_display(screen, 'Gps_Time:', 20, 780, 310)
-    message_display(screen, 'Gps_latitude:', 20, 792, 350)
-    message_display(screen, 'Gps_longitude:', 20, 801, 390)
-    message_display(screen, 'Gps_altitude:', 20, 792, 430)
-    message_display(screen, 'Gps_sats:', 20, 776, 470)
+    message_display(screen, 'GPS Time:', 20, 780, 310)
+    message_display(screen, 'GPS Latitude:', 20, 792, 350)
+    message_display(screen, 'GPS Longitude:', 20, 801, 390)
+    message_display(screen, 'GPS Altitude:', 20, 792, 430)
+    message_display(screen, 'GPS Sats:', 20, 776, 470)
 
-    message_display(screen, 'Pitch:', 20, 757, 550)
-    message_display(screen, 'Roll:', 20, 750, 590)
-    message_display(screen, 'Blade_Spin_Rate:', 20, 815, 630)
+    message_display(screen, 'Pitch:', 20, 755, 550)
+    message_display(screen, 'Roll:', 20, 747, 590)
+    message_display(screen, 'Blade_Spin_Rate:', 20, 810, 630)
 
     if v_variables[15]:
         pygame.draw.rect(screen, green, (182, 378, 20, 20))
@@ -165,12 +165,14 @@ class Graph(pygame.sprite.Sprite):
     #graph box color: (200, 135, 620, 450)
     def display_graph(self, screen, color1, v_variables,v_axis):
         pygame.draw.rect(screen, color1, (343, 50, 338, 60))
+        #Temporary Values
         xaxis = [0,1,2,3,4,5,6,7,8,9,10]
         yaxis = [300,295,287,285,279,275,262,260,253,249,243]
         plt.plot(xaxis,yaxis)
         plt.ylabel(v_axis)
         plt.xlabel('Time (s)')
         plt.savefig('testplot.png')
+        #Load of graphic as an image to add to the existing window
         img = pygame.image.load('testplot.png')
         screen.blit(img,(200,135))
         #pygame.display.flip()
@@ -179,11 +181,11 @@ class Graph(pygame.sprite.Sprite):
         message_display(screen, self.text, 40, 343 + 338 / 2, 50 + 60 / 2)
 
         if v_variables[16]:
-            c = "%s = %d seconds" % (v_axis[0], v_variables[0])
-            message_display(screen, c, 20, 515, 540)
+            c = "%s = %d seconds" % (0,0)
+            #message_display(screen, c, 20, 515, 540)
 
-            c = "%s = %d " % (v_axis[self.num], v_variables[self.num])
-            message_display(screen, c, 20, 270, 350)
+            c = "%s = %d " % (self.num,self.num)
+            #message_display(screen, c, 20, 270, 350)
 
     def update(self):
         self.text = ""
@@ -274,19 +276,19 @@ def main():
     b_voltage = Button(0, screen, blue, light_blue, "Voltage", 18, 150, 30, 780, 60)
     b_pressure = Button(0, screen, blue, light_blue, "Pressure", 18, 150, 30, 780, 110)
     b_temperature = Button(0, screen, blue, light_blue, "Temperature", 18, 150, 30, 780, 160)
-    b_aceleration = Button(0, screen, blue, light_blue, "Aceleration", 18, 150, 30, 780, 210)
+    b_acceleration = Button(0, screen, blue, light_blue, "Acceleration", 18, 150, 30, 780, 210)
 
-    b_gps_time = Button(0, screen, blue, light_blue, "Gps_Time", 18, 150, 30, 780, 280)
-    b_gps_latitude = Button(0, screen, blue, light_blue, "Gps_Latitude", 18, 150, 30, 780, 330)
-    b_gps_longitude = Button(0, screen, blue, light_blue, "Gps_Longitude", 18, 150, 30, 780, 380)
-    b_gps_altitude = Button(0, screen, blue, light_blue, "Gps_Altitude", 18, 150, 30, 780, 430)
-    b_gps_sats = Button(0, screen, blue, light_blue, "Gps_Sats", 18, 150, 30, 780, 480)
+    b_gps_time = Button(0, screen, blue, light_blue, "GPS Time", 18, 150, 30, 780, 280)
+    b_gps_latitude = Button(0, screen, blue, light_blue, "GPS Latitude", 18, 150, 30, 780, 330)
+    b_gps_longitude = Button(0, screen, blue, light_blue, "GPS Longitude", 18, 150, 30, 780, 380)
+    b_gps_altitude = Button(0, screen, blue, light_blue, "GPS Altitude", 18, 150, 30, 780, 430)
+    b_gps_sats = Button(0, screen, blue, light_blue, "GPS Sats", 18, 150, 30, 780, 480)
 
     b_pitch = Button(0, screen, blue, light_blue, "Pitch", 18, 150, 30, 780, 550)
     b_roll = Button(0, screen, blue, light_blue, "Roll", 18, 150, 30, 780, 600)
     b_blade_spin_rate = Button(0, screen, blue, light_blue, "Blade_Spin_Rate", 18, 150, 30, 780, 650)
 
-    b_desktop = [b_general, b_altitude, b_voltage, b_pressure, b_temperature, b_aceleration, b_gps_time,
+    b_desktop = [b_general, b_altitude, b_voltage, b_pressure, b_temperature, b_acceleration, b_gps_time,
                  b_gps_latitude, b_gps_longitude, b_gps_altitude, b_gps_sats, b_pitch, b_roll, b_blade_spin_rate]
 
     # END_BOTONES------------------------------------------------------------------------------------------------------
@@ -297,19 +299,19 @@ def main():
     g_voltage = Graph("Voltage", 2)
     g_pressure = Graph("Pressure", 3)
     g_temperature = Graph("Temperature", 4)
-    g_aceleration = Graph("Aceleration", 5)
+    g_acceleration = Graph("Acceleration", 5)
 
-    g_gps_time = Graph("Gps_Time", 6)
-    g_gps_latitude = Graph("Gps_Latitude", 7)
-    g_gps_longitude = Graph("Gps_Longitude", 8)
-    g_gps_altitude = Graph("Gps_Altitude", 9)
-    g_gps_sats = Graph("Gps_Sats", 10)
+    g_gps_time = Graph("GPS Time", 6)
+    g_gps_latitude = Graph("GPS Latitude", 7)
+    g_gps_longitude = Graph("GPS Longitude", 8)
+    g_gps_altitude = Graph("GPS Altitude", 9)
+    g_gps_sats = Graph("GPS Sats", 10)
 
     g_pitch = Graph("Pitch", 11)
     g_roll = Graph("Roll", 12)
     g_blade_spin_rate = Graph("Blade_Spin_Rate", 13)
 
-    g_variables = [g_altitude, g_voltage, g_pressure, g_temperature, g_aceleration, g_gps_time, g_gps_latitude,
+    g_variables = [g_altitude, g_voltage, g_pressure, g_temperature, g_acceleration, g_gps_time, g_gps_latitude,
                    g_gps_longitude, g_gps_altitude, g_gps_sats, g_pitch, g_roll, g_blade_spin_rate]
 
     # END_GRAFICOS-----------------------------------------------------------------------------------------------------
@@ -381,7 +383,7 @@ def main():
 
                 screen.blit(fondo, (0, 0))
                 b_return.update()
-                g_variables[num-1].display_graph(screen, blue, v_variables,v_axis[num])
+                g_variables[num-1].display_graph(screen, blue, v_variables,v_axis[num+1])
                 pygame.display.flip()
                 if b_return.selected:
                     menu = True
