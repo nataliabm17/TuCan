@@ -1,9 +1,16 @@
+# -*- coding: utf-8 -*-
 import pygame, sys, os
 import random
+from random import random
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
+from matplotlib import pylab
+from pylab import *
 import numpy as np
-
+import time
+import matplotlib.animation as animation
 from pygame.locals import *
+import Image
 
 # ----------------------------------------------
 # Constantes
@@ -21,6 +28,9 @@ blue = (0, 172, 192)
 window_Width = 1000
 window_Height = 700
 
+v_axis = ["Time", "Packet Count", "Altitude (m)", "Pressure (Pa)", "Temperature (C)", "Voltage (V)", "GPS Time (ms)",
+            "GPS Latitude", "GPS Altitude", "GPS Stats", "Pitch", "Roll", "Blade Spin Rate (rpm)", "Software State",
+            "Launch", "Start", "Document", "Skip"]
 # ----------------------------------------------
 # Clases y Funciones utilizadas
 # ----------------------------------------------
@@ -77,27 +87,27 @@ def display_general(screen, color1, v_variables):
     pygame.draw.rect(screen, color1, (405, 50, 190, 60))
     message_display(screen, "General", 40, 405 + 190 / 2, 50 + 60 / 2)
 
-    message_display(screen, 'Team #: 0000', 20, 140, 210)
+    message_display(screen, 'Team #: 0000', 20, 135, 210)
     message_display(screen, 'Mission Time:', 20, 140, 290)
-    message_display(screen, 'Port:', 20, 140, 340)
-    message_display(screen, 'Launch:', 20, 140, 390)
-    message_display(screen, 'Software State:', 20, 140, 440)
+    message_display(screen, 'Port:', 20, 95, 340)
+    message_display(screen, 'Launch:', 20, 110, 390)
+    message_display(screen, 'Software State:', 20, 145, 440)
 
-    message_display(screen, 'Altitude:', 20, 790, 70)
-    message_display(screen, 'Voltage:', 20, 790, 110)
-    message_display(screen, 'Pressure:', 20, 790, 150)
-    message_display(screen, 'Temperature:', 20, 790, 190)
-    message_display(screen, 'Acceleration:', 20, 790, 230)
+    message_display(screen, 'Altitude:', 20, 775, 70)
+    message_display(screen, 'Voltage:', 20, 773, 110)
+    message_display(screen, 'Pressure:', 20, 780, 150)
+    message_display(screen, 'Temperature:', 20, 798, 190)
+    message_display(screen, 'Acceleration:', 20, 795, 230)
 
-    message_display(screen, 'Gps_Time:', 20, 790, 310)
-    message_display(screen, 'Gps_latitude:', 20, 790, 350)
-    message_display(screen, 'Gps_longitude:', 20, 790, 390)
-    message_display(screen, 'Gps_altitude:', 20, 790, 430)
-    message_display(screen, 'Gps_sats:', 20, 790, 470)
+    message_display(screen, 'Gps_Time:', 20, 780, 310)
+    message_display(screen, 'Gps_latitude:', 20, 792, 350)
+    message_display(screen, 'Gps_longitude:', 20, 801, 390)
+    message_display(screen, 'Gps_altitude:', 20, 792, 430)
+    message_display(screen, 'Gps_sats:', 20, 776, 470)
 
-    message_display(screen, 'Pitch:', 20, 790, 550)
-    message_display(screen, 'Roll:', 20, 790, 590)
-    message_display(screen, 'Blade_Spin_Rate:', 20, 790, 630)
+    message_display(screen, 'Pitch:', 20, 757, 550)
+    message_display(screen, 'Roll:', 20, 750, 590)
+    message_display(screen, 'Blade_Spin_Rate:', 20, 815, 630)
 
     if v_variables[15]:
         pygame.draw.rect(screen, green, (182, 378, 20, 20))
@@ -143,7 +153,7 @@ def display_general(screen, color1, v_variables):
 def update_variables(v_variables):
     if v_variables[16] and v_variables[18] < v_variables[0]:
         for x in range(1, 14):
-            v_variables[x] = random.randint(1, 10) + v_variables[0]
+            v_variables[x] = randint(1, 30) + v_variables[0]
         add_data_csv(v_variables)
         v_variables[18] += 1
 
@@ -152,17 +162,27 @@ class Graph(pygame.sprite.Sprite):
     def __init__(self, text, num):
         self.text = text
         self.num = num
-
-    def display_graph(self, screen, color1, v_variables):
+    #graph box color: (200, 135, 620, 450)
+    def display_graph(self, screen, color1, v_variables,v_axis):
         pygame.draw.rect(screen, color1, (343, 50, 338, 60))
-        pygame.draw.rect(screen, (235, 235, 235), (200, 135, 620, 450))
+        xaxis = [0,1,2,3,4,5,6,7,8,9,10]
+        yaxis = [300,295,287,285,279,275,262,260,253,249,243]
+        plt.plot(xaxis,yaxis)
+        plt.ylabel(v_axis)
+        plt.xlabel('Time (s)')
+        plt.savefig('testplot.png')
+        img = pygame.image.load('testplot.png')
+        screen.blit(img,(200,135))
+        #pygame.display.flip()
+
+        #pygame.draw.rect(screen, (235, 235, 235), (200, 135, 620, 450))
         message_display(screen, self.text, 40, 343 + 338 / 2, 50 + 60 / 2)
 
         if v_variables[16]:
-            c = "X = %d seconds" % (v_variables[0])
+            c = "%s = %d seconds" % (v_axis[0], v_variables[0])
             message_display(screen, c, 20, 515, 540)
 
-            c = "Y = %d " % (v_variables[self.num])
+            c = "%s = %d " % (v_axis[self.num], v_variables[self.num])
             message_display(screen, c, 20, 270, 350)
 
     def update(self):
@@ -239,6 +259,7 @@ def main():
     v_variables = [v_time, v_packet_count, v_altitude, v_pressure, v_temp, v_voltage, v_gps_time, v_gps_latitude,
                    v_gps_longitude, v_gps_altitude, v_gps_sats, v_pitch, v_roll, v_blade_spin_rate, v_software_state,
                    v_launch, v_start, v_document, v_skip]
+
 
     # END_VARIABLES----------------------------------------------------------------------------------------------------
 
@@ -360,7 +381,7 @@ def main():
 
                 screen.blit(fondo, (0, 0))
                 b_return.update()
-                g_variables[num-1].display_graph(screen, blue, v_variables)
+                g_variables[num-1].display_graph(screen, blue, v_variables,v_axis[num])
                 pygame.display.flip()
                 if b_return.selected:
                     menu = True

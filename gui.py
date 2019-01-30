@@ -13,6 +13,7 @@ window_Width = 1200
 window_Height = 900
 background_colour = light_blue
 
+
 # create text objects
 def text_objects(text, font):
     textSurface = font.render(text, True, black)
