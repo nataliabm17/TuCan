@@ -1,3 +1,13 @@
+#############################
+# Module:   GUI.py
+# Author:
+# Date:
+# Version:
+#
+# Description:
+#
+###############################
+
 # -*- coding: utf-8 -*-
 import pygame, sys, os
 import random
@@ -10,7 +20,7 @@ import numpy as np
 import time
 import matplotlib.animation as animation
 from pygame.locals import *
-import Image
+import image
 
 # ----------------------------------------------
 # Constantes
@@ -28,21 +38,32 @@ blue = (0, 172, 192)
 window_Width = 1000
 window_Height = 700
 
-#y labels for the graphics
-v_axis = ["NA1", "NA2","Altitude (m)", "Voltage (V)", "Pressure (Pa)", "Temperature (C)", "Acceleration (m/s*s)", "GPS Time (s)",
-            "GPS Latitude", "GPS Longitude","GPS Altitude", "GPS Stats", "Pitch", "Roll", "Blade Spin Rate (rpm)"]
+# y labels for the graphics
+v_axis = ["NA1", "NA2", "Altitude (m)", "Voltage (V)", "Pressure (Pa)", "Temperature (C)", "Acceleration (m/s*s)",
+          "GPS Time (s)",
+          "GPS Latitude", "GPS Longitude", "GPS Altitude", "GPS Stats", "Pitch", "Roll", "Blade Spin Rate (rpm)"]
+
+
 # ----------------------------------------------
 # Clases y Funciones utilizadas
 # ----------------------------------------------
 
 
+# Effect: Create a csv file
+# Required: variables's vector (v_variables)
+# Modified: csv file
 def create_csv(v_variables):
-    v_variables[17] = open("Flight_0000.csv", "w+")
+
+    v_variables[17] = open("Flight_3666.csv", "w")
     v_variables[17].write("MISSION_TIME;PACKET_COUNT;ALTITUDE;PRESSURE;TEMP;VOLTAGE;GPS_TIME;GPS_LATITUDE;"
                           "GPS_LONGITUDE;GPS_ALTITUDE;GPS_SATS;PITCH;ROLL;BLADE_SPIN_RATE;SOFTWARE_STATE\n")
 
 
+# Effect: Add a row of data to the csv file
+# Required: variables's vector (v_variables)
+# Modified: csv file
 def add_data_csv(v_variables):
+    # v_variables[17] = file entrance
     for x in range(0, 14):
         v = "%d" % (v_variables[x])
         v_variables[17].write(v)
@@ -52,6 +73,9 @@ def add_data_csv(v_variables):
     v_variables[17].write("\n")
 
 
+# Effect: load an image from the current directory and return it
+# Required: image's name, current directory
+# Modified: display screen
 def load_image(nombre, dir_imagen, alpha=False):
     # Encontramos la ruta completa de la imagen
     ruta = os.path.join(dir_imagen, nombre)
@@ -61,7 +85,7 @@ def load_image(nombre, dir_imagen, alpha=False):
         print("Error, no se puede cargar la imagen: " + ruta)
         sys.exit(1)
 
-    # Comprobar si la imagen tiene "canal alpha" (como los png)
+        # Comprobar si la imagen tiene "canal alpha" (como los png)
     if alpha is True:
         image = image.convert_alpha()
     else:
@@ -70,12 +94,17 @@ def load_image(nombre, dir_imagen, alpha=False):
     return image
 
 
+# Effect: Create a text object and return it
+# Required: text, font type
 def text_objects(text, font):
     textSurface = font.render(text, True, black)
 
     return textSurface, textSurface.get_rect()
 
 
+# Effect: display a message with an specified size and position
+# Required: screen, text, size, x and y axis (for position)
+# Modified: display screen
 def message_display(screen, text, size, x, y):
     font = pygame.font.Font('freesansbold.ttf', size)
     text_surf, text_rect = text_objects(text, font)
@@ -83,6 +112,9 @@ def message_display(screen, text, size, x, y):
     screen.blit(text_surf, text_rect)
 
 
+# Effect: display all messages and buttons on interface's general tab
+# Required: screen, color1, variables's vector (v_variables)
+# Modified: display screen
 def display_general(screen, color1, v_variables):
     pygame.draw.rect(screen, color1, (405, 50, 190, 60))
     message_display(screen, "General", 40, 405 + 190 / 2, 50 + 60 / 2)
@@ -109,6 +141,7 @@ def display_general(screen, color1, v_variables):
     message_display(screen, 'Roll:', 20, 747, 590)
     message_display(screen, 'Blade_Spin_Rate:', 20, 810, 630)
 
+    # v_variables[15] = bool launch enable
     if v_variables[15]:
         pygame.draw.rect(screen, green, (182, 378, 20, 20))
     else:
@@ -116,9 +149,12 @@ def display_general(screen, color1, v_variables):
 
     message_display(screen, v_variables[14], 20, 250, 440)
 
+    # display mission time
     t = " %d seconds" % (v_variables[0])
     message_display(screen, t, 20, 265, 290)
 
+#  display all data in general's tab
+#  t is a local variable
     if v_variables[16]:
         t = " %d" % (v_variables[1])
         message_display(screen, t, 20, 920, 70)
@@ -150,42 +186,49 @@ def display_general(screen, color1, v_variables):
         message_display(screen, t, 20, 920, 630)
 
 
+# Effect: Update the data in each program iteration
+# Required: variables's vector (v_variables)
+# Modified: v_variables
 def update_variables(v_variables):
-    if v_variables[16] and v_variables[18] < v_variables[0]:
+    if v_variables[16] and v_variables[18] < v_variables[0]:  # v_time
         for x in range(1, 14):
             v_variables[x] = randint(1, 30) + v_variables[0]
         add_data_csv(v_variables)
-        v_variables[18] += 1
+        v_variables[18] += 1  # v_skip
 
 
 class Graph(pygame.sprite.Sprite):
     def __init__(self, text, num):
         self.text = text
         self.num = num
-    #graph box color: (200, 135, 620, 450)
-    def display_graph(self, screen, color1, v_variables,v_axis):
+        # graph box color: (200, 135, 620, 450)
+
+    # Effect: Display the current graph on the screen
+    # Required: screen, color1, variables's vector(v_variables), num(number to labels's vector)
+    # Modified: display screen
+    def display_graph(self, screen, color1, v_variables, v_axis):
         pygame.draw.rect(screen, color1, (343, 50, 338, 60))
-        #Temporary Values
-        xaxis = [0,1,2,3,4,5,6,7,8,9,10]
-        yaxis = [300,295,287,285,279,275,262,260,253,249,243]
-        plt.plot(xaxis,yaxis)
+        # Temporary Values
+        xaxis = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        yaxis = [300, 295, 287, 285, 279, 275, 262, 260, 253, 249, 243]
+        plt.plot(xaxis, yaxis)
         plt.ylabel(v_axis)
         plt.xlabel('Time (s)')
         plt.savefig('testplot.png')
-        #Load of graphic as an image to add to the existing window
+        # Load of graphic as an image to add to the existing window
         img = pygame.image.load('testplot.png')
-        screen.blit(img,(200,135))
-        #pygame.display.flip()
+        screen.blit(img, (200, 135))
+        # pygame.display.flip()
 
-        #pygame.draw.rect(screen, (235, 235, 235), (200, 135, 620, 450))
+        # pygame.draw.rect(screen, (235, 235, 235), (200, 135, 620, 450))
         message_display(screen, self.text, 40, 343 + 338 / 2, 50 + 60 / 2)
 
         if v_variables[16]:
-            c = "%s = %d seconds" % (0,0)
-            #message_display(screen, c, 20, 515, 540)
+            c = "%s = %d seconds" % (0, 0)
+            # message_display(screen, c, 20, 515, 540)
 
-            c = "%s = %d " % (self.num,self.num)
-            #message_display(screen, c, 20, 270, 350)
+            c = "%s = %d " % (self.num, self.num)
+            # message_display(screen, c, 20, 270, 350)
 
     def update(self):
         self.text = ""
@@ -205,39 +248,45 @@ class Button:
         self.y = y
         self.selected = False
 
+    # Effect: Update the current button´s state in the screen
+    # Required: An action over the current button
+    # Modified: The current button
     def update(self):
         mouse = pygame.mouse.get_pos()
         click = pygame.mouse.get_pressed()
 
         if self.x < mouse[0] < self.x + self.width and self.y < mouse[1] < self.y + self.height:
             pygame.draw.rect(self.surface, self.color2, (self.x, self.y, self.width, self.height))
-            message_display(self.surface, self.text, self.size, self.x + self.width/2, self.y + self.height/2)
+            message_display(self.surface, self.text, self.size, self.x + self.width / 2, self.y + self.height / 2)
 
             if click[0] == 1:
                 self.selected = True
 
         else:
             pygame.draw.rect(self.surface, self.color1, (self.x, self.y, self.width, self.height))
-            message_display(self.surface, self.text, self.size, self.x + self.width/2, self.y + self.height/2)
+            message_display(self.surface, self.text, self.size, self.x + self.width / 2, self.y + self.height / 2)
+
+        # ------------------------------
 
 
-# ------------------------------
 # Funcion principal del juego
 # ------------------------------
 
 
 def main():
+
+    #  runs pygame's module, and initializes clock's variable
     pygame.init()
     screen = pygame.display.set_mode((window_Width, window_Height))
     pygame.display.set_caption("TuCan CANSAT UCR")
     fondo = load_image("pp.jpg", "imagen", alpha=False)
     clock = pygame.time.Clock()
-    menu = True
+    menu = True # uses to determine if interface will display main screen or some button screen
     num = 0
 
     # VARIABLES--------------------------------------------------------------------------------------------------------
 
-    v_time = 0  # 0
+    v_time = 0  # 0 mission time
     v_packet_count = 0  # 1
     v_altitude = 0  # 2
     v_pressure = 0  # 3
@@ -253,15 +302,14 @@ def main():
     v_blade_spin_rate = 0  # 13
     v_software_state = None  # 14
 
-    v_launch = False  # 15
-    v_start = False  # 16
-    v_document = None  # 17
+    v_launch = False  # 15 uses to determine if launch has begins
+    v_start = False  # 16 uses to determine if start's button has be pressed
+    v_document = None  # 17 uses to access csv file
     v_skip = -1  # 18
 
     v_variables = [v_time, v_packet_count, v_altitude, v_pressure, v_temp, v_voltage, v_gps_time, v_gps_latitude,
                    v_gps_longitude, v_gps_altitude, v_gps_sats, v_pitch, v_roll, v_blade_spin_rate, v_software_state,
                    v_launch, v_start, v_document, v_skip]
-
 
     # END_VARIABLES----------------------------------------------------------------------------------------------------
 
@@ -269,6 +317,7 @@ def main():
 
     b_start = Button(0, screen, blue, light_blue, "Start", 18, 72, 32, 90, 520)
     b_reset = Button(0, screen, blue, light_blue, "Reset", 18, 72, 32, 90, 560)
+    b_payload_reset = Button(0, screen, blue, light_blue, "Payload reset", 18, 130, 32, 220, 560)
     b_return = Button(0, screen, blue, light_blue, "Return", 18, 72, 32, 90, 600)
     b_general = Button(0, screen, blue, light_blue, "General", 40, 190, 70, 80, 300)
 
@@ -318,60 +367,70 @@ def main():
 
     create_csv(v_variables)
 
-    while True:
+    while True:  # Program's Loop
 
         update_variables(v_variables)
 
         if v_variables[16]:  # v_start
             tick = clock.tick(60)
-            if tick/1000 < 1:
-                v_variables[0] += (tick / 1000)
+            if tick / 1000 < 1:
+                v_variables[0] += (tick / 1000)  # v_time
             else:
                 tick = 0
-            v_variables[14] = "r. data"
-            v_variables[15] = True
+            v_variables[14] = "r. data"  # v_software_state
+            v_variables[15] = True  # v_launch
         else:
-            v_variables[0] = 0
-            v_variables[18] = -1
-            v_variables[14] = "idle"
-            v_variables[15] = False
+            v_variables[0] = 0  # v_time
+            v_variables[18] = -1  # v_skip
+            v_variables[14] = "idle"  # v_software_state
+            v_variables[15] = False  # v_launch
 
         for event in pygame.event.get():
 
             if event.type == pygame.QUIT:
+                v_variables[17].close()  # v_document
                 sys.exit(0)
 
-        if menu:
+        if menu:  # if menu = true display main screen, else display selected button screen
             screen.blit(fondo, (0, 0))
 
-            for x in b_desktop:
+            for x in b_desktop:  # x = each button in desktop vector
                 x.update()
-                if x.selected:
+                if x.selected:  # uses to determine if some button has be pressed
                     menu = False
 
             pygame.display.flip()
 
-        else:
-            if b_desktop[0].selected:
+        else:  # menu = false
+            if b_desktop[0].selected:   # b_desktop[0] = b_general. If general button has be pressed
                 screen.blit(fondo, (0, 0))
                 display_general(screen, blue, v_variables)
+
+                # button's update
                 b_start.update()
                 b_reset.update()
                 b_return.update()
+                b_payload_reset.update()
+
                 pygame.display.flip()
+
+                # If return, start or reset button has be pressed
                 if b_return.selected:
                     menu = True
                     b_return.selected = False
                     b_general.selected = False
                 elif b_start.selected:
-                    v_variables[16] = True
+                    v_variables[16] = True  # v_variables[16] = v_start
                     b_start.selected = False
                 elif b_reset.selected:
-                    v_variables[17].close()
-                    v_variables[16] = False
+                    # v_variables[17].close()  # v_variables[17] = v_document
+                    v_variables[16] = False  # v_variables[16] = v_start
                     b_reset.selected = False
+                    # create_csv(v_variables)
 
-            else:
+            else:  # b_general.selected = False
+
+                # Finds if another button has be pressed instead of the general button and takes it's number
                 if num == 0:
                     num = 1
                     con = True
@@ -383,9 +442,11 @@ def main():
 
                 screen.blit(fondo, (0, 0))
                 b_return.update()
-                g_variables[num-1].display_graph(screen, blue, v_variables,v_axis[num+1])
+                # g_variables[num-1] = current graph
+                g_variables[num - 1].display_graph(screen, blue, v_variables, v_axis[num + 1])
                 pygame.display.flip()
                 if b_return.selected:
+
                     menu = True
                     b_return.selected = False
                     b_desktop[num].selected = False
