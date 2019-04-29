@@ -20,7 +20,7 @@ import numpy as np
 import time
 import matplotlib.animation as animation
 from pygame.locals import *
-import image
+from PIL import Image
 
 # ----------------------------------------------
 # Constantes
@@ -248,7 +248,7 @@ class Button:
         self.y = y
         self.selected = False
 
-    # Effect: Update the current button´s state in the screen
+    # Effect: Update the current button s state in the screen
     # Required: An action over the current button
     # Modified: The current button
     def update(self):
