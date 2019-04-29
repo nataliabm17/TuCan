@@ -64,7 +64,7 @@ def create_csv(v_variables):
     v_variables[17] = open("Flight_0000.csv", "w")
 
     # Add the header string to csv file
-    v_variables[17].write("MISSION_TIME;PACKET_COUNT;ALTITUDE;PRESSURE;TEMP;VOLTAGE;GPS_TIME;GPS_LATITUDE;" 
+    v_variables[17].write("MISSION_TIME;PACKET_COUNT;ALTITUDE;PRESSURE;TEMP;VOLTAGE;GPS_TIME;GPS_LATITUDE;"
                           "GPS_LONGITUDE;GPS_ALTITUDE;GPS_SATS;PITCH;ROLL;BLADE_SPIN_RATE;SOFTWARE_STATE\n")
 
 
@@ -153,7 +153,7 @@ def display_general(screen, color1, v_variables):
     pygame.draw.rect(screen, color1, (405, 50, 190, 60))
     message_display(screen, "General", 40, 405 + 190 / 2, 50 + 60 / 2)
 
-    message_display(screen, 'Team #: 3666', 20, 140, 180)
+    message_display(screen, 'Team #: 3666', 20, 135, 210)
     message_display(screen, 'Mission Time:', 20, 140, 260)
     message_display(screen, 'Count of packets:', 20, 140, 290)
     message_display(screen, 'Launch:', 20, 140, 360)
@@ -311,7 +311,7 @@ class Button:
 
         '''
         --update(self) Button--
-        Effect: Update the current button´s state in the screen
+        Effect: Update the current buttons state in the screen
         Required: An action over the current button
         Modified: The current button
         '''
