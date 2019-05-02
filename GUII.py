@@ -39,9 +39,8 @@ window_Width = 1000
 window_Height = 700
 
 # y labels for the graphics
-v_axis = ["NA1", "NA2", "Altitude (m)", "Voltage (V)", "Pressure (Pa)", "Temperature (C)", "Acceleration (m/s*s)",
-          "GPS Time (s)",
-          "GPS Latitude", "GPS Longitude", "GPS Altitude", "GPS Stats", "Pitch", "Roll", "Blade Spin Rate (rpm)"]
+v_axis = ["NA1", "NA2", "Altitude (m)", "Pressure (Pa)", "Temperature (C)", "Voltage (V)", "GPS Time (s)",
+          "GPS Latitude", "GPS Longitude", "GPS Altitude", "GPS Sats", "Pitch", "Roll", "Blade Spin Rate (rpm)"]
 
 
 # ----------------------------------------------
@@ -119,27 +118,26 @@ def display_general(screen, color1, v_variables):
     pygame.draw.rect(screen, color1, (405, 50, 190, 60))
     message_display(screen, "General", 40, 405 + 190 / 2, 50 + 60 / 2)
 
-    message_display(screen, 'Team #: 0000', 20, 135, 210)
+    message_display(screen, 'Team #: 3666', 20, 135, 210)
     message_display(screen, 'Mission Time:', 20, 140, 290)
     message_display(screen, 'Port:', 20, 95, 340)
     message_display(screen, 'Launch:', 20, 110, 390)
     message_display(screen, 'Software State:', 20, 145, 440)
 
-    message_display(screen, 'Altitude:', 20, 775, 70)
-    message_display(screen, 'Voltage:', 20, 773, 110)
-    message_display(screen, 'Pressure:', 20, 780, 150)
-    message_display(screen, 'Temperature:', 20, 798, 190)
-    message_display(screen, 'Acceleration:', 20, 795, 230)
+    message_display(screen, 'Altitude:', 20, 795, 70)
+    message_display(screen, 'Pressure:', 20, 795, 110)
+    message_display(screen, 'Temperature:', 20, 795, 150)
+    message_display(screen, 'Voltage:', 20, 795, 190)
 
-    message_display(screen, 'GPS Time:', 20, 780, 310)
-    message_display(screen, 'GPS Latitude:', 20, 792, 350)
-    message_display(screen, 'GPS Longitude:', 20, 801, 390)
-    message_display(screen, 'GPS Altitude:', 20, 792, 430)
-    message_display(screen, 'GPS Sats:', 20, 776, 470)
+    message_display(screen, 'GPS Time:', 20, 795, 270)
+    message_display(screen, 'GPS Latitude:', 20, 795, 310)
+    message_display(screen, 'GPS Longitude:', 20, 795, 350)
+    message_display(screen, 'GPS Altitude:', 20, 795, 390)
+    message_display(screen, 'GPS Sats:', 20, 795, 430)
 
-    message_display(screen, 'Pitch:', 20, 755, 550)
-    message_display(screen, 'Roll:', 20, 747, 590)
-    message_display(screen, 'Blade_Spin_Rate:', 20, 810, 630)
+    message_display(screen, 'Pitch:', 20, 795, 510)
+    message_display(screen, 'Roll:', 20, 795, 550)
+    message_display(screen, 'Blade Spin Rate:', 20, 795, 590)
 
     # v_variables[15] = bool launch enable
     if v_variables[15]:
@@ -156,34 +154,32 @@ def display_general(screen, color1, v_variables):
 #  display all data in general's tab
 #  t is a local variable
     if v_variables[16]:
-        t = " %d" % (v_variables[1])
+        t = " %d" % (v_variables[2])  # Altitude
         message_display(screen, t, 20, 920, 70)
-        t = " %d" % (v_variables[2])
+        t = " %d" % (v_variables[3])  # Pressure
         message_display(screen, t, 20, 920, 110)
-        t = " %d" % (v_variables[3])
+        t = " %d" % (v_variables[4])  # Temperature
         message_display(screen, t, 20, 920, 150)
-        t = " %d" % (v_variables[4])
+        t = " %d" % (v_variables[5])  # Voltage
         message_display(screen, t, 20, 920, 190)
-        t = " %d" % (v_variables[5])
-        message_display(screen, t, 20, 920, 230)
 
-        t = " %d" % (v_variables[6])
+        t = " %d" % (v_variables[6])  # Gps Time
+        message_display(screen, t, 20, 920, 270)
+        t = " %d" % (v_variables[7])  # Gps latitude
         message_display(screen, t, 20, 920, 310)
-        t = " %d" % (v_variables[7])
+        t = " %d" % (v_variables[8])  # Gps longitude
         message_display(screen, t, 20, 920, 350)
-        t = " %d" % (v_variables[8])
+        t = " %d" % (v_variables[9])  # Gps altitude
         message_display(screen, t, 20, 920, 390)
-        t = " %d" % (v_variables[9])
+        t = " %d" % (v_variables[10])  # Gps sats
         message_display(screen, t, 20, 920, 430)
-        t = " %d" % (v_variables[10])
-        message_display(screen, t, 20, 920, 470)
 
-        t = " %d" % (v_variables[11])
+        t = " %d" % (v_variables[11])  # pitch
+        message_display(screen, t, 20, 920, 510)
+        t = " %d" % (v_variables[12])  # roll
         message_display(screen, t, 20, 920, 550)
-        t = " %d" % (v_variables[12])
+        t = " %d" % (v_variables[13])  # blade spin rate
         message_display(screen, t, 20, 920, 590)
-        t = " %d" % (v_variables[13])
-        message_display(screen, t, 20, 920, 630)
 
 
 # Effect: Update the data in each program iteration
@@ -191,7 +187,7 @@ def display_general(screen, color1, v_variables):
 # Modified: v_variables
 def update_variables(v_variables):
     if v_variables[16] and v_variables[18] < v_variables[0]:  # v_time
-        for x in range(1, 14):
+        for x in range(2, 14):
             v_variables[x] = randint(1, 30) + v_variables[0]
         add_data_csv(v_variables)
         v_variables[18] += 1  # v_skip
@@ -319,36 +315,37 @@ def main():
     b_reset = Button(0, screen, blue, light_blue, "Reset", 18, 72, 32, 90, 560)
     b_payload_reset = Button(0, screen, blue, light_blue, "Payload reset", 18, 130, 32, 220, 560)
     b_return = Button(0, screen, blue, light_blue, "Return", 18, 72, 32, 90, 600)
+
     b_general = Button(0, screen, blue, light_blue, "General", 40, 190, 70, 80, 300)
 
     b_altitude = Button(0, screen, blue, light_blue, "Altitude", 18, 150, 30, 780, 10)
-    b_voltage = Button(0, screen, blue, light_blue, "Voltage", 18, 150, 30, 780, 60)
-    b_pressure = Button(0, screen, blue, light_blue, "Pressure", 18, 150, 30, 780, 110)
-    b_temperature = Button(0, screen, blue, light_blue, "Temperature", 18, 150, 30, 780, 160)
-    b_acceleration = Button(0, screen, blue, light_blue, "Acceleration", 18, 150, 30, 780, 210)
+    b_pressure = Button(0, screen, blue, light_blue, "Pressure", 18, 150, 30, 780, 60)
+    b_temperature = Button(0, screen, blue, light_blue, "Temperature", 18, 150, 30, 780, 110)
+    b_voltage = Button(0, screen, blue, light_blue, "Voltage", 18, 150, 30, 780, 160)
 
-    b_gps_time = Button(0, screen, blue, light_blue, "GPS Time", 18, 150, 30, 780, 280)
-    b_gps_latitude = Button(0, screen, blue, light_blue, "GPS Latitude", 18, 150, 30, 780, 330)
-    b_gps_longitude = Button(0, screen, blue, light_blue, "GPS Longitude", 18, 150, 30, 780, 380)
-    b_gps_altitude = Button(0, screen, blue, light_blue, "GPS Altitude", 18, 150, 30, 780, 430)
-    b_gps_sats = Button(0, screen, blue, light_blue, "GPS Sats", 18, 150, 30, 780, 480)
+    b_gps_time = Button(0, screen, blue, light_blue, "GPS Time", 18, 150, 30, 780, 230)
+    b_gps_latitude = Button(0, screen, blue, light_blue, "GPS Latitude", 18, 150, 30, 780, 280)
+    b_gps_longitude = Button(0, screen, blue, light_blue, "GPS Longitude", 18, 150, 30, 780, 330)
+    b_gps_altitude = Button(0, screen, blue, light_blue, "GPS Altitude", 18, 150, 30, 780, 380)
+    b_gps_sats = Button(0, screen, blue, light_blue, "GPS Sats", 18, 150, 30, 780, 430)
 
-    b_pitch = Button(0, screen, blue, light_blue, "Pitch", 18, 150, 30, 780, 550)
-    b_roll = Button(0, screen, blue, light_blue, "Roll", 18, 150, 30, 780, 600)
-    b_blade_spin_rate = Button(0, screen, blue, light_blue, "Blade_Spin_Rate", 18, 150, 30, 780, 650)
+    b_pitch = Button(0, screen, blue, light_blue, "Pitch", 18, 150, 30, 780, 500)
+    b_roll = Button(0, screen, blue, light_blue, "Roll", 18, 150, 30, 780, 550)
+    b_blade_spin_rate = Button(0, screen, blue, light_blue, "Blade Spin Rate", 18, 150, 30, 780, 600)
 
-    b_desktop = [b_general, b_altitude, b_voltage, b_pressure, b_temperature, b_acceleration, b_gps_time,
-                 b_gps_latitude, b_gps_longitude, b_gps_altitude, b_gps_sats, b_pitch, b_roll, b_blade_spin_rate]
+    b_desktop = [b_general, b_altitude, b_pressure, b_temperature, b_voltage, b_gps_time, b_gps_latitude,
+                 b_gps_longitude, b_gps_altitude, b_gps_sats, b_pitch, b_roll, b_blade_spin_rate]
 
     # END_BOTONES------------------------------------------------------------------------------------------------------
 
     # GRAFICOS---------------------------------------------------------------------------------------------------------
 
-    g_altitude = Graph("Altitude", 1)
-    g_voltage = Graph("Voltage", 2)
+    # Graph("Name", v_variable num)
+
+    g_altitude = Graph("Altitude", 2)
     g_pressure = Graph("Pressure", 3)
     g_temperature = Graph("Temperature", 4)
-    g_acceleration = Graph("Acceleration", 5)
+    g_voltage = Graph("Voltage", 5)
 
     g_gps_time = Graph("GPS Time", 6)
     g_gps_latitude = Graph("GPS Latitude", 7)
@@ -358,10 +355,10 @@ def main():
 
     g_pitch = Graph("Pitch", 11)
     g_roll = Graph("Roll", 12)
-    g_blade_spin_rate = Graph("Blade_Spin_Rate", 13)
+    g_blade_spin_rate = Graph("Blade Spin Rate", 13)
 
-    g_variables = [g_altitude, g_voltage, g_pressure, g_temperature, g_acceleration, g_gps_time, g_gps_latitude,
-                   g_gps_longitude, g_gps_altitude, g_gps_sats, g_pitch, g_roll, g_blade_spin_rate]
+    g_variables = [g_altitude, g_pressure, g_temperature, g_voltage, g_gps_time, g_gps_latitude, g_gps_longitude,
+                   g_gps_altitude, g_gps_sats, g_pitch, g_roll, g_blade_spin_rate]
 
     # END_GRAFICOS-----------------------------------------------------------------------------------------------------
 
