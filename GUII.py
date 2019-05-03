@@ -192,11 +192,25 @@ def update_variables(v_variables):
         add_data_csv(v_variables)
         v_variables[18] += 1  # v_skip
 
+# Effect: Update xaxis and yaxis arrays for use in plot
+# Required: variable's and graph's vector (v_variables, g_variables)
+# Modified: Each graph in graph's vector
+def update_graph(v_variables, g_variables):
+    for i in range(0, 12):
+        for j in range(1, 10):
+            g_variables[i].xaxis[j-1] = g_variables[i].xaxis[j]
+            g_variables[i].yaxis[j-1] = g_variables[i].yaxis[j]
+
+        g_variables[i].xaxis[9] = v_variables[0]
+        g_variables[i].yaxis[9] = v_variables[g_variables[i].num]
+
 
 class Graph(pygame.sprite.Sprite):
     def __init__(self, text, num):
         self.text = text
         self.num = num
+        self.xaxis = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        self.yaxis = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         # graph box color: (200, 135, 620, 450)
 
     # Effect: Display the current graph on the screen
@@ -205,9 +219,8 @@ class Graph(pygame.sprite.Sprite):
     def display_graph(self, screen, color1, v_variables, v_axis):
         pygame.draw.rect(screen, color1, (343, 50, 338, 60))
         # Temporary Values
-        xaxis = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        yaxis = [300, 295, 287, 285, 279, 275, 262, 260, 253, 249, 243]
-        plt.plot(xaxis, yaxis)
+
+        plt.plot(self.xaxis, self.yaxis)
         plt.ylabel(v_axis)
         plt.xlabel('Time (s)')
         plt.savefig('testplot.png')
@@ -366,7 +379,9 @@ def main():
 
     while True:  # Program's Loop
 
-        update_variables(v_variables)
+        update_variables(v_variables) # Update each variable in v_variables
+
+        update_graph(v_variables, g_variables) # Update each graph data plot
 
         if v_variables[16]:  # v_start
             tick = clock.tick(60)
