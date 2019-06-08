@@ -1,12 +1,11 @@
 #include <Wire.h>
 //#include <DS3231.h>
-#include <Time.h>
 #include <DS1307RTC.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BMP280.h>
 #include <EEPROM.h> //0:temp,4:pres,8:altitude, 12:flag, 15:swst
 #include<MPU6050.h>
-
+#include <Time.h>
 
 MPU6050 mpu;
 
@@ -21,7 +20,7 @@ tmElements_t tm;
 //Hall Effect sensor
 volatile byte half_revolutions;
 unsigned int rpm_n;
-float rpm;
+
 unsigned long timeold;
 //MPU IMU
 const int MPU_addr=0x68;
@@ -33,17 +32,20 @@ float y;
 float z;
 
 //GENERAL VARIABLES
-int flag;             //reboot check --flag=0xFF:inicio normal,flag=1:se reinicio 
+int flag;             //reboot check -- flag=0xFF:inicio normal,flag=1:se reinicio 
 float team_id = 3666;
 float mission_t;
 float packet_cnt;               //FALTA!!
 float alt_i, alt_o;
+float offset;            
+float alt_open;
 float pressure;
 float temp;
 float voltage;
 float gps_t;
 float gps_lat, gps_long, gps_sats, gps_alt;
 float pitch, roll;
+float rpm;
 float swst; //software state:
                       //0.0: BOOT
                       //1.0: LAUNCH_DETECT
@@ -51,11 +53,10 @@ float swst; //software state:
                       //3.0: RELEASED
                       //4.0: LANDED
 int match_cnt = 0;    //match count
-//float data[16];  //data to save in EEPROM.
 const int buzzer = 7;
 int calibrate = 0;
 uint8_t payload[86];
-float variables[17];
+float variables[16];
 uint8_t comma;
 
 typedef union{
@@ -66,27 +67,27 @@ typedef union{
 
 void bmp280();
 void comp_alt();
-void writeEEPROM();
-void readEEPROM();
-void updateEEPROM();
-void imp();
-
 bool setTime();
-void magnet_detect();
 void settingTime();
+void magnet_detect();
 void voltageSensor();
 void imuGyro();
 void descent();
-
+void imp();
 
 void setup() {
   flag = EEPROM.read(0);    //if flag=0xFF-> inicio normal
                             //if flag=1   -> se reinicio
-  if(flag != 1){
+                            
+  alt_open = 450;         //PARAMETERS TO CHANGE
+  offset = 1179.0;
+                            
+  if(flag != 1){  //Inicio normal
     mission_t = 0.0;
     team_id = 3666;
     packet_cnt = 0.0;
     alt_i = 0.0;
+    alt_o = 0.0;
     pressure = 0.0;
     temp = 0.0;
     voltage = 0.0;
@@ -103,7 +104,7 @@ void setup() {
     calibrate = 0;
     EEPROM.write(0,flag);
     EEPROM.write(2,team_id);
-  }else{
+  }else{      //flag == 1
     flag = 1;
     alt_o = 0.0;
     mission_t = EEPROM.read(6);   
@@ -112,15 +113,18 @@ void setup() {
     pressure = EEPROM.read(18); 
     temp = EEPROM.read(22);  
     voltage = EEPROM.read(26); 
-    gps_lat = EEPROM.read(30);
-    gps_long = EEPROM.read(34);  
-    gps_sats = EEPROM.read(38);
-    pitch = EEPROM.read(46);  
-    roll = EEPROM.read(50);  
-    rpm = EEPROM.read(54);  //blade spin rate
-    swst = EEPROM.read(58);  //software state
-    gps_t = EEPROM.read(62); 
+    gps_t = EEPROM.read(30);  
+    gps_lat = EEPROM.read(34);
+    gps_long = EEPROM.read(38);  
+    gps_sats = EEPROM.read(46);
+    pitch = EEPROM.read(50);  
+    roll = EEPROM.read(54);  
+    rpm = EEPROM.read(58);  //blade spin rate
+    swst = EEPROM.read(62);  //software state
   }
+
+
+  
   Wire.begin();
   //MPU IMU
   Wire.beginTransmission(MPU_addr);
@@ -143,6 +147,8 @@ void setup() {
     Serial.println("BMP280 sensor not found, check wiring!");
     while (!Serial);
   }
+
+  //To send data
   Serial.begin(115200);
 }
 
@@ -178,15 +184,16 @@ void loop() {
         EEPROM.update(18,pressure);
         EEPROM.update(22,temp);
         EEPROM.update(26,voltage);
-        EEPROM.update(30,gps_lat);
-        EEPROM.update(34,gps_long);
-        EEPROM.update(38,gps_alt);
-        EEPROM.update(42,gps_sats);
-        EEPROM.update(46,pitch);
-        EEPROM.update(50,roll);
-        EEPROM.update(54,rpm);
-        EEPROM.update(58,swst);
-        EEPROM.update(62,gps_t);
+        EEPROM.update(30,gps_t);
+        EEPROM.update(34,gps_lat);
+        EEPROM.update(38,gps_long);
+        EEPROM.update(42,gps_alt);
+        EEPROM.update(46,gps_sats);
+        EEPROM.update(50,pitch);
+        EEPROM.update(54,roll);
+        EEPROM.update(58,rpm);
+        EEPROM.update(62,swst);
+
         //Convert data to sent through XBees
         imp();
         for(int i = 0; i < 86; ++i){
@@ -208,23 +215,19 @@ void descent(){
   int count = 0;
   bool detect_alt = false;
   while(!detect_alt){
-    alt_i = bme.readAltitude(1013.25);
-    if(alt_i <= 450.0){
-      count++;
-    }else{
-      count = 0;
-    }
-    if(count >= 5){
-      swst = 3.0;            //RELEASED Mode
+    alt_i = bme.readAltitude(1013.25) - offset;
+    if(alt_i <= alt_open){
+      swst = 3.0;
+      detect_alt = true;
     }
   }
 }
 
 void just_landed(){
-    alt_i = bme.readAltitude(1013.25);
-    delay(10);
-    alt_o = bme.readAltitude(1013.25);
-    if((alt_o - alt_i) == 0){
+    alt_i = bme.readAltitude(1013.25) - offset;
+    delay(1000);
+    alt_o = bme.readAltitude(1013.25) - offset;
+    if((alt_o - alt_i) < 1.1){
       swst = 4.0;
     }
 }
@@ -237,23 +240,24 @@ void comp_alt(){
   int desc_m = 7;
   while(!detect){
     alt_i = alt_o;
-    alt_o = bme.readAltitude(1013.25);  //adjust to local forcase
+    delay(70);
+    alt_o = bme.readAltitude(1013.25) - offset;  //adjust to local forcase
     //Serial.print(alt_i);
-    //Serial.println(", ");
+    //Serial.print(", ");
     //Serial.print(alt_o);
-    //Serial.println("\n");
+    //Serial.print("\n");
     rest = alt_o - alt_i;
-    if((rest > 0) && (rest > desc_m)){
-      desc++;
+    if(rest < 0.0){
+      desc++;      
     }else{
       asc++;
     }
-    if(asc >= 7){
-      detect = true;        //UP
+    if(asc >= 5){
       swst = 1.0;
-    }else if(desc >= 7){
-      detect = true;        //DOWN
+      detect = true;        //UP
+    }else if(desc >= 5){
       swst = 2.0;
+      detect = true;        //DOWN
     }
   }
 }
@@ -262,15 +266,14 @@ void bmp280(){
   //Temperature, pressure, approximate altitude
   temp = bme.readTemperature();
   pressure = bme.readPressure() * 100;
-  alt_i = alt_o;                       //vieja
-  alt_o = bme.readAltitude(1013.25);   //nueva
-  //Serial.print(temperature);
+  alt_i = alt_o;                                //vieja
+  delay(70);
+  alt_o = bme.readAltitude(1013.25) - offset;   //nueva
+  //Serial.println(temperature);
   //Serial.print(", ");
   //Serial.print(pressure);
   //Serial.print(", ");
   //Serial.print(altitude1); // this should be adjusted to your local forcase
-  //Serial.print("\n");
-
 }
 
 bool setTime(){
@@ -283,7 +286,7 @@ bool setTime(){
 
 void readTime(){
     RTC.read(tm);
-    mission_t = (tm.Minute*60)+tm.Second;
+    mission_t = (tm.Minute*60) + tm.Second; //Mission time in seconds
 }
 
 void magnet_detect()//This function is called whenever a magnet/interrupt is detected by the arduino
@@ -337,23 +340,23 @@ void imp(){
   
   FLOATUNION_t myfloat;
   int cont = 0;
-  variables[0] = 1000000;
-  variables[1] = team_id;
-  variables[2] = mission_t;
-  variables[3] = packet_cnt;
-  variables[4] = alt_i;
-  variables[5] = pressure;
-  variables[6] = temp;
-  variables[7] = voltage;
-  variables[8] = gps_t;
-  variables[9] = gps_lat;
-  variables[10] = gps_long;
-  variables[11] = gps_alt;
-  variables[12] = gps_sats;
-  variables[13] = pitch;
-  variables[14] = roll;
-  variables[15] = rpm;
-  variables[16] = swst;
+
+  variables[0] = team_id;
+  variables[1] = mission_t;
+  variables[2] = packet_cnt;
+  variables[3] = alt_i;
+  variables[4] = pressure;
+  variables[5] = temp;
+  variables[6] = voltage;
+  variables[7] = gps_t;
+  variables[8] = gps_lat;
+  variables[9] = gps_long;
+  variables[10] = gps_alt;
+  variables[11] = gps_sats;
+  variables[12] = pitch;
+  variables[13] = roll;
+  variables[14] = rpm;
+  variables[15] = swst;
   comma = ',';
 
   int i=0;
