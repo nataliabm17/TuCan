@@ -36,6 +36,7 @@ void loop() {
   //Serial.print(tm.Second);
   //Serial.print("\n");
   readingTime();
+  Serial.println(mission_t);
 }
 
 bool getTime(const char *str){
