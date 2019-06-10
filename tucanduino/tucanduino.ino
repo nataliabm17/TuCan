@@ -137,7 +137,7 @@ void comp_alt() {
       Serial.print("UP*****************\n");
       swst = 1;
       detect = true;        //UP
-    } else if (desc >= 5) {
+    } else if ((desc >= 5) && (swst == 1)) {
       swst = 2;
       Serial.print("DOWN--------------------\n");
       detect = true;        //DOWN
