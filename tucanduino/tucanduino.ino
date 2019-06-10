@@ -15,24 +15,24 @@ Adafruit_BMP280 bme;  //I2C
 
 int swst;
 
-
 float offset;           
 float alt_open;
-
-
 const int buzzer = 4;
 float alt_i, alt_o;
 
 void comp_alt();
 void descent();
 
-int serv_opened_pos = 0;
-int serv_closed_pos = 0;
-
+//CONTAINER 1
+int serv_opened_pos = 165;
+int serv_closed_pos = 95;
+//CONTAINER 2
+//int serv_opened_pos = 160;
+//int serv_closed_pos = 90;
 
 void setup() {  
-  offset = 1179.0;              //PARAMETERS TO CHANGE
-  alt_open = 450;
+  offset = 1379.0;              //PARAMETERS TO CHANGE
+  alt_open = 203.0;
   
   pinMode(buzzer, OUTPUT);
   serv.attach(9);
@@ -44,8 +44,6 @@ void setup() {
   alt_i = 0.0;
   alt_o = 0.0;
   swst = 0;
-
-
   
   /**************/    //ON SOUND
   tone(buzzer, 1000);
@@ -76,9 +74,10 @@ void setup() {
 
 
 void loop() {
+  //Serial.println(bme.readAltitude(1013.25) - offset);
   if (swst == 0) {      //BOOT Mode
     comp_alt();
-    Serial.println("Fin comparacion");
+    Serial.println("Fin primera comparacion");
   } else if (swst == 1) { //UP Mode
     comp_alt();
     Serial.println("Fin comparacion UP");
@@ -136,8 +135,8 @@ void comp_alt() {
     }
     if ((asc >= 5) && (alt_i > 10.0)) {
       Serial.print("UP*****************\n");
-      detect = true;        //UP
       swst = 1;
+      detect = true;        //UP
     } else if (desc >= 5) {
       swst = 2;
       Serial.print("DOWN--------------------\n");
