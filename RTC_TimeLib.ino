@@ -22,6 +22,7 @@ void setup() {
     //}
   //}
   settingTime();
+  RTC.write(tm);
   Serial.begin(9600);
   while (!Serial) ; // wait for Arduino Serial Monitor
   delay(200);
@@ -35,7 +36,7 @@ void loop() {
   //Serial.print(", ");
   //Serial.print(tm.Second);
   //Serial.print("\n");
-  readingTime();
+  //readingTime();
   Serial.println(mission_t);
 }
 
