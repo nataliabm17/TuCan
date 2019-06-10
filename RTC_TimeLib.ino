@@ -14,42 +14,42 @@ void setup() {
   bool config=false;
 
   // get the time the compiler was run
-  //if (getTime(__TIME__)) {
-    //parse = true;
+  if (getTime(__TIME__)) {
+    parse = true;
     // and configure the RTC with this info
-    //if (RTC.write(tm)) {
-      //config = true;
-    //}
-  //}
-  settingTime();
-  RTC.write(tm);
+    if (RTC.write(tm)) {
+      config = true;
+    }
+  }
+  
+  //settingTime();
+  //RTC.write(tm);
   Serial.begin(9600);
   while (!Serial) ; // wait for Arduino Serial Monitor
   delay(200);
 }
 
 void loop() {
-  //RTC.read(tm);
-  //Serial.print(tm.Hour);
-  //Serial.print(", ");
-  //Serial.print(tm.Minute);
-  //Serial.print(", ");
-  //Serial.print(tm.Second);
-  //Serial.print("\n");
+  RTC.read(tm);
+  Serial.print(tm.Hour);
+  Serial.print(", ");
+  Serial.print(tm.Minute);
+  Serial.print(", ");
+  Serial.print(tm.Second);
+  Serial.print("\n");
   //readingTime();
-  Serial.println(mission_t);
+  Serial.println((60*tm.Minute)+tm.Second);
 }
 
 bool getTime(const char *str){
   int Hour, Min, Sec;
 
   if (sscanf(str, "%d:%d:%d", &Hour, &Min, &Sec) != 3) return false;
-  tm.Hour = Hour;
-  tm.Minute = Min;
-  tm.Second = Sec;
+  tm.Hour = 1;
+  tm.Minute = 0;
+  tm.Second = 0;
   return true;
 }
-
 
 void settingTime(){
   tm.Hour = 1;
