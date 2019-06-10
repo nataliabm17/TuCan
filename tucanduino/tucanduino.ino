@@ -134,7 +134,7 @@ void comp_alt() {
       asc++;
       Serial.print("Asciende\n");
     }
-    if (asc >= 5) {
+    if ((asc >= 5) && (alt_i > 10.0)) {
       Serial.print("UP*****************\n");
       detect = true;        //UP
       swst = 1;
