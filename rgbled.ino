@@ -1,5 +1,5 @@
-float yellow = ;
-float red = ;
+float yellow = 7.2;
+float red = 6.0;
 
 int redPin = 3;
 int bluePin = 4;
