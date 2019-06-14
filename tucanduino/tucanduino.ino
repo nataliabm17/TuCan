@@ -31,7 +31,7 @@ int serv_closed_pos = 95;
 //int serv_closed_pos = 90;
 
 void setup() {  
-  offset = 1379.0;              //PARAMETERS TO CHANGE
+  offset = 179.0;              //PARAMETERS TO CHANGE
   alt_open = 203.0;
   
   pinMode(buzzer, OUTPUT);
@@ -44,6 +44,13 @@ void setup() {
   alt_i = 0.0;
   alt_o = 0.0;
   swst = 0;
+
+
+  /**************/ //BUZZER SOUND TEST
+  tone(buzzer, 860);
+  delay(4000);
+  noTone(buzzer);
+  delay(50);
   
   /**************/    //ON SOUND
   tone(buzzer, 1000);
