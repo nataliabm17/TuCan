@@ -1,7 +1,9 @@
-#include <Wire.h>
-#include <TimeLib.h>
 #include <DS1307RTC.h>
+#include <TimeLib.h>
+#include <Adafruit_GPS.h>
+#include <Wire.h>
 #include <Adafruit_Sensor.h>
+#include <DS1307RTC.h>
 #include <EEPROM.h> //0:temp,4:pres,8:altitude, 12:flag, 15:swst
 #include <MPU6050_tockn.h>
 #include <farmerkeith_BMP280.h>
@@ -10,6 +12,17 @@
 MPU6050 mpu6050(Wire);
 bmp280 bmp0;
 
+
+//---XBEE---
+#define Xbee Serial1
+
+
+//---GPS---
+#define GPSSerial Serial3
+Adafruit_GPS GPS(&GPSSerial);
+
+
+uint32_t timer = millis();
 
 #define A 0         //Analog pin 0
 
@@ -45,9 +58,21 @@ float swst; //software state:
 int match_cnt = 0;    //match count
 const int buzzer = 7;
 int calibrate = 0;
-uint8_t payload[86];
-float variables[16];
+uint8_t payload[92];
+float variables[19];
 uint8_t comma;
+
+bool parse;
+bool config;
+
+
+float yellow = 7.2;
+float red = 6.0;
+
+int redPin = 3;
+int bluePin = 4;
+int greenPin = 5;
+
 
 
 //MPU variables
@@ -69,6 +94,9 @@ void voltageSensor();
 void imuGyro();
 void descent();
 void imp();
+void gps();
+void just_landed();
+void rgbLED();
 
 void setup() {
   flag = EEPROM.read(0);    //if flag=0xFF-> inicio normal
@@ -76,12 +104,16 @@ void setup() {
                             
   alt_open = 450;         //PARAMETERS TO CHANGE
   offset = 1179.0;
+
+  pinMode(redPin, OUTPUT);
+  pinMode(bluePin, OUTPUT);
+  pinMode(greenPin, OUTPUT);
   
                             
   if(flag != 1){  //Inicio normal
 
-    bool parse=false;
-    bool config=false;
+    parse=false;
+    config=false;
     
     mission_t = 0.0;
     team_id = 3666;
@@ -91,7 +123,9 @@ void setup() {
     pressure = 0.0;
     temp = 0.0;
     voltage = 0.0;
-    gps_t = 0.0;
+    gps_th = 0.0;
+    gps_tm = 0.0;
+    gps_ts = 0.0;
     gps_long = 0.0;
     gps_lat = 0.0;
     gps_sats = 0.0;
@@ -132,12 +166,15 @@ void setup() {
   
 
   //Send Data
-  Wire.begin();
   Serial.begin(9600);
+  Xbee.begin(115200);
+  GPS.begin(9600);
+  Wire.begin();
 
 
   //MPU
   mpu6050.begin();
+  
   //Antes de cada prueba limpiar EEPROM
   if(flag != 1){ //Inicio Normal
       mpu6050.calcGyroOffsets(true);
@@ -168,8 +205,11 @@ void setup() {
 void loop() {
     if(swst == 0.0){          //BOOT Mode
         comp_alt();
+        voltageSensor();
+        rgbLED();
     }else if(swst == 1.0){    //ASCEND Mode
-
+       voltageSensor();
+       rgbLED();
        // get the time the compiler was run
         if (getTime(__TIME__)) {
            parse = true;
@@ -184,9 +224,31 @@ void loop() {
         comp_alt();
     }else if(swst == 2.0){    //DESCENT Mode
         descent();            //450 m ??
+        voltageSensor();
+        rgbLED();
     }else if(swst  == 3.0){   //RELEASED Mode => start transmission
+
+       //---GPS---
+       // read data from the GPS in the 'main loop'
+       char c = GPS.read();
+
+       // if a sentence is received, we can check the checksum, parse it...
+       if (GPS.newNMEAreceived()) {
+          if (!GPS.parse(GPS.lastNMEA())) // this also sets the newNMEAreceived() flag to false
+            return; // we can fail to parse a sentence in which case we should just wait for another
+       }
+                
+       // if millis() or timer wraps around, we'll just reset it
+       if (timer > millis()) timer = millis();
+
+       // approximately every 1 second
+       if (millis() - timer > 1000) { 
+          timer = millis(); // reset the timer      
+
+      
         bmp();   //temp, pressure and altitude readings
         voltageSensor();
+        rgbLED();
         imuGyro();
         readingTime();
                 
@@ -199,6 +261,7 @@ void loop() {
         }
 
         //SPACE FOR GPS FUNCTION
+        gps();
         
         //Updating values to save in EEPROM
         
@@ -208,7 +271,7 @@ void loop() {
         EEPROM.update(18,pressure);
         EEPROM.update(22,temp);
         EEPROM.update(26,voltage);
-        EEPROM.update(30,gps_t);
+        EEPROM.update(30,gps_th);
         EEPROM.update(34,gps_lat);
         EEPROM.update(38,gps_long);
         EEPROM.update(42,gps_alt);
@@ -217,22 +280,29 @@ void loop() {
         EEPROM.update(54,roll);
         EEPROM.update(58,rpm);
         EEPROM.update(62,swst);
+        EEPROM.update(66, gps_tm);
+        EEPROM.update(70, gps_ts);
+        EEPROM.update(74, gyroXoffset); 
+        EEPROM.update(78, gyroYoffset);
+        EEPROM.update(82, gyroZoffset);
 
         //Convert data to sent through XBees
         imp();
-        for(int i = 0; i < 86; ++i){
-          Serial.write(payload[i]);
+        for(int i = 0; i < 92; ++i){
+          Xbee.write(payload[i]);
           //delay(10);
         }
         packet_cnt = packet_cnt + 1.0;
-        just_landed();      //checking if landed
+        just_landed();      //checking if 
+      }
     }else if(swst == 4.0){
+        voltageSensor();
+        rgbLED();
         tone(buzzer, 1000);
         delay(1050);
         noTone(buzzer);
         delay(500);
-    }
-    
+    }  
 }
 
 void descent(){
@@ -349,44 +419,72 @@ void imuGyro(){
   y = mpu6050.getAngleY();
   z = mpu6050.getAngleZ();
   
-  pitch = 5;
-  roll = 5;   
+  pitch = 180 * atan(x/sqrt(y*y + z*z))/PI;
+  roll = 180 * atan(y/sqrt(x*x + z*z))/PI;  
 }
 
 void imp(){
   
   FLOATUNION_t myfloat;
-  int cont = 0;
 
-  variables[0] = team_id;
-  variables[1] = mission_t;
-  variables[2] = packet_cnt;
-  variables[3] = alt_i;
-  variables[4] = pressure;
-  variables[5] = temp;
-  variables[6] = voltage;
-  variables[7] = gps_t;
-  variables[8] = gps_lat;
-  variables[9] = gps_long;
-  variables[10] = gps_alt;
-  variables[11] = gps_sats;
-  variables[12] = pitch;
-  variables[13] = roll;
-  variables[14] = rpm;
-  variables[15] = swst;
+  variables[0] = 1000000; //0-3
+  variables[1] = team_id; //5-8
+  variables[2] = mission_t; //10-13
+  variables[3] = packet_cnt; //15-18
+  variables[4] = alt_i; //20-23
+  variables[5] = pressure; //25-28
+  variables[6] = temp; //30-33
+  variables[7] = voltage; //35-38
+  variables[8] = gps_th; //40-43
+  variables[9] = gps_tm; //44-47
+  variables[10] = gps_ts; //48-51
+  variables[11] = gps_lat; //53-56
+  variables[12] = gps_long; //58-61
+  variables[13] = gps_alt; //63-66
+  variables[14] = gps_sats; //68-71
+  variables[15] = pitch; //73-76
+  variables[16] = roll; //78-81
+  variables[17] = rpm; //83-86
+  variables[18] = swst; //88-91
   comma = ',';
 
   int i=0;
   int j=0;
-  for(i = 0; i < 18; i++){
+  int cont = 0;
+  for(i = 0; i < 19; i++){
     myfloat.number = variables[i];
     for(j = 0; j < 4; j++){
       payload[cont] = myfloat.bytes[j];
       ++cont;
     }
-    if(i != 7 && i != 8 && i != 17){
+    if(i != 8 && i != 9 && i != 18){
       payload[cont] = comma;
       ++cont;
     }
   }
+}
+
+void gps(){
+
+    gps_th = GPS.hour;
+    gps_tm = GPS.minute;
+    gps_ts = GPS.seconds;
+
+    gps_lat = GPS.latitudeDegrees;
+    gps_long = GPS.longitudeDegrees;
+    gps_alt = GPS.altitude;  
+    gps_sats = GPS.satellites;
+}
+
+void rgbLED(){
+    if(voltage > yellow){                             //GREEN   
+        digitalWrite(greenPin, HIGH);
+    }else if((voltage < yellow) && (voltage > red)){  //YELLOW
+        digitalWrite(greenPin, HIGH);
+        digitalWrite(redPin,HIGH);
+    }else if(voltage < red){                          //RED
+        digitalWrite(greenPin,LOW);
+        delay(300);
+        digitalWrite(redPin,HIGH);
+    }
 }
